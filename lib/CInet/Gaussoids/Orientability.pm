@@ -55,8 +55,8 @@ sub orientations :Export(:DEFAULT) {
     my $axioms = $AXIOMS{[ $cube->set, [] ]} //= oriented_axioms $cube;
     my $solver = CInet::ManySAT->new->read($axioms);
     my @witt;
-    for my $ijK ($A->cube->squares) {
-        my $idx = $A->cube->pack($ijK);
+    for my $ijK ($cube->squares) {
+        my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
         push @witt, +$x if $A->cival($ijK) eq 0;
         push @witt, -$x if $A->cival($ijK) eq 1;
@@ -66,10 +66,11 @@ sub orientations :Export(:DEFAULT) {
 
 sub is_orientable :Export(:DEFAULT) {
     my $A = shift;
-    my $oriented = oriented_solver($A->cube);
+    my $cube = $A->cube;
+    my $oriented = oriented_solver($cube);
     my @witt;
-    for my $ijK ($A->cube->squares) {
-        my $idx = $A->cube->pack($ijK);
+    for my $ijK ($cube->squares) {
+        my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
         push @witt, +$x if $A->cival($ijK) eq 0;
         push @witt, -$x if $A->cival($ijK) eq 1;
@@ -79,17 +80,18 @@ sub is_orientable :Export(:DEFAULT) {
 
 sub orientable_completion :Export(:DEFAULT) {
     my $A = shift;
-    my $oriented = oriented_solver($A->cube);
+    my $cube = $A->cube;
+    my $oriented = oriented_solver($cube);
     my @witt;
-    for my $ijK ($A->cube->squares) {
-        my $idx = $A->cube->pack($ijK);
+    for my $ijK ($cube->squares) {
+        my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
         $oriented->read([ +$x ]) if $A->cival($ijK) eq 0;
     }
 
     my $B = $A->clone;
-    for my $ijK ($A->cube->squares) {
-        my $idx = $A->cube->pack($ijK);
+    for my $ijK ($cube->squares) {
+        my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
         my $sat = $oriented->solve([ -$x ]);
         # Not satisfiable means $ijK is implied:
