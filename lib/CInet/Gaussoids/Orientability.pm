@@ -42,18 +42,17 @@ sub oriented_axioms {
 }
 
 use CInet::Hash::FaceKey;
-tie my %AXIOMS, 'CInet::Hash::FaceKey';
+tie my %SOLVERS, 'CInet::Hash::FaceKey';
 sub oriented_solver {
     my $cube = shift;
-    my $axioms = $AXIOMS{[ $cube->set, [] ]} //= oriented_axioms $cube;
-    CInet::ManySAT::Incremental->new->read($axioms)
+    $SOLVERS{[ $cube->set, [] ]} //=
+        CInet::ManySAT::Incremental->new->read(oriented_axioms $cube)
 }
 
 sub orientations :Export(:DEFAULT) {
     my $A = shift;
     my $cube = $A->cube;
-    my $axioms = $AXIOMS{[ $cube->set, [] ]} //= oriented_axioms $cube;
-    my $solver = CInet::ManySAT->new->read($axioms);
+    my $solver = oriented_solver($cube);
     my @witt;
     for my $ijK ($cube->squares) {
         my $idx = $cube->pack($ijK);
@@ -67,7 +66,7 @@ sub orientations :Export(:DEFAULT) {
 sub is_orientable :Export(:DEFAULT) {
     my $A = shift;
     my $cube = $A->cube;
-    my $oriented = oriented_solver($cube);
+    my $solver = oriented_solver($cube);
     my @witt;
     for my $ijK ($cube->squares) {
         my $idx = $cube->pack($ijK);
@@ -75,25 +74,25 @@ sub is_orientable :Export(:DEFAULT) {
         push @witt, +$x if $A->cival($ijK) eq 0;
         push @witt, -$x if $A->cival($ijK) eq 1;
     }
-    $oriented->solve(\@witt)
+    $solver->solve(\@witt)
 }
 
 sub orientable_completion :Export(:DEFAULT) {
     my $A = shift;
     my $cube = $A->cube;
-    my $oriented = oriented_solver($cube);
+    my $solver = oriented_solver($cube);
     my @witt;
     for my $ijK ($cube->squares) {
         my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
-        $oriented->read([ +$x ]) if $A->cival($ijK) eq 0;
+        $solver->read([ +$x ]) if $A->cival($ijK) eq 0;
     }
 
     my $B = $A->clone;
     for my $ijK ($cube->squares) {
         my $idx = $cube->pack($ijK);
         my ($x, $y) = (2*$idx - 1, 2*$idx);
-        my $sat = $oriented->solve([ -$x ]);
+        my $sat = $solver->solve([ -$x ]);
         # Not satisfiable means $ijK is implied:
         $B->cival($ijK) = 0 if not $sat;
     }
