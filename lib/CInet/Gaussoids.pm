@@ -30,7 +30,7 @@ use Modern::Perl 2018;
 use Import::Into;
 
 sub import {
-    CInet::Gaussoids::Axioms        -> import::into(1);
+    CInet::Propositional::Families  -> import::into(1);
     CInet::Gaussoids::Orientability -> import::into(1);
 }
 
